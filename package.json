@@ -1,0 +1,43 @@
+{
+  "name": "clerq",
+  "version": "0.1.0",
+  "description": "redis based service registry",
+  "keywords": [
+    "redis",
+    "service discovery",
+    "service registry"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "coverage": "./node_modules/.bin/jest --coverage",
+    "test": "./node_modules/.bin/jest"
+  },
+  "author": {
+    "name": "Umut Aydin"
+  },
+  "engines": {
+    "node": ">=v6.14.4"
+  },
+  "bugs": {
+    "url": "https://github.com/Dvs-Bilisim/clerq/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Dvs-Bilisim/clerq.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.16.0",
+    "jest": "^24.7.1"
+  },
+  "dependencies": {
+    "is_js": "^0.9.0",
+    "network-address": "^1.1.2",
+    "redis": "^2.8.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

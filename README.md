@@ -33,3 +33,27 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 - **port        :** redis port
 - **prefix      :** prefix for service names
 - **redis       :** options for redis instance ( please see <https://www.npmjs.com/package/redis> )
+
+## Methods
+
+- **.up(service, [target]):** adds a new service instance
+- **.down(service, [target]):** removes an existing service instance
+- **.get(service):** returns a random instance by service
+- **.all(service):** returns all instances by service
+- **.services():** returns list of all services
+- **.stop():** stops service registry
+
+## Examples
+
+```js
+const ServiceRegistry = require('clerq');
+const registry = new ServiceRegistry({ debug: true });
+
+registry.up('test', 8000).then(console.log).catch(console.log);
+
+registry.down('test', 8000).then(console.log).catch(console.log);
+
+registry.get('test').then(console.log).catch(console.log);
+
+registry.stop();
+```

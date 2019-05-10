@@ -23,7 +23,7 @@ class ServiceRegistry {
     }
 
     /**
-     * @description adds a new service
+     * @description adds a new service instance
      * @param {String} service name
      * @param {String | Number} target address
      * @returns Promise
@@ -45,7 +45,7 @@ class ServiceRegistry {
     }
 
     /**
-     * @description removes an existing service
+     * @description removes an existing service instance
      * @param {String} service name
      * @param {String | Number} target address
      * @returns Promise

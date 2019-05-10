@@ -27,7 +27,7 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 ## Configuration
 
 - **debug       :** Debug mode. It's disabled by default.
-- **delimiter   :** Delimiter between service and method names. It's a single dot(.) by default.
+- **delimiter   :** Delimiter between prefix and service name.
 - **expire      :** expire for service registry records. it's disabled by default.
 - **host        :** redis hostname
 - **port        :** redis port

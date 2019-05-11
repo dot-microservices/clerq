@@ -26,6 +26,7 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 
 ## Configuration
 
+- **cache       :** Expiration value in milliseconds for service caching. It's disabled by default.
 - **debug       :** Debug mode. It's disabled by default.
 - **delimiter   :** Delimiter between prefix and service name.
 - **expire      :** expire for service registry records. it's disabled by default.

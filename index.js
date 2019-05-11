@@ -18,6 +18,7 @@ class ServiceRegistry {
         if (is.not.undefined(options) && is.not.object(options))
             throw new Error('invalid options');
 
+        this._cache = {};
         this._options = Object.assign({ prefix: 'clerq' }, options || {});
         this._redis = redis.createClient(this._options.port, this._options.host, this._options.redis);
     }
@@ -69,14 +70,20 @@ class ServiceRegistry {
     /**
      * @description returns a random instance by service
      * @param {String} service name
-     * @param {Boolean} skip pass true if you don't want to verify the address
      * @returns Promise
      * @memberof ServiceRegistry
      */
-    get(service) { // ? skip
-        // TODO: check if service is still available
+    get(service) {
         return new Promise((resolve, reject) => {
             if (is.not.string(service) || is.empty(service)) throw new Error('INVALID_SERVICE');
+
+            if (is.number(this._options.cache) && this._options.cache > 0 && this._cache.hasOwnProperty(service)) {
+                const cached = this._cache[service];
+                if (is.object(cached)) {
+                    if (Date.now() - cached.t < this._options.cache) return resolve(cached.d);
+                    else delete this._cache[service];
+                }
+            }
 
             const key = this._key(service);
             this._redis.srandmember(key, (e, d) => {
@@ -84,7 +91,11 @@ class ServiceRegistry {
                 if (is.error(e)) {
                     if (this._options.debug) console.log(e.message);
                     reject(e);
-                } else resolve(d);
+                } else {
+                    if (is.number(this._options.cache) && this._options.cache > 0)
+                        if (d) this._cache[service] = { d, t: Date.now() };
+                    resolve(d);
+                }
             });
         });
     }
@@ -105,7 +116,14 @@ class ServiceRegistry {
                 if (is.error(e)) {
                     if (this._options.debug) console.log(e.message);
                     reject(e);
-                } else resolve(d);
+                } else {
+                    if (is.number(this._options.cache) && this._options.cache > 0)
+                        if (is.array(d) && is.not.empty(d)) {
+                            const address = d[ Math.floor(Math.random() * d.length) ];
+                            this._cache[service] = { d: address, t: Date.now() };
+                        }
+                    resolve(d);
+                }
             });
         });
     }
@@ -130,6 +148,20 @@ class ServiceRegistry {
                 }
             });
         });
+    }
+
+    /**
+     * @description checks if service instance cached properly
+     * @param {String} service
+     * @returns {Boolean}
+     * @memberof ServiceRegistry
+     */
+    isCached(service) {
+        if (is.number(this._options.cache) && this._options.cache > 0 && this._cache.hasOwnProperty(service)) {
+            const cached = this._cache[service];
+            if (is.object(cached)) return Date.now() - cached.t < this._options.cache;
+        }
+        return false;
     }
 
     /**

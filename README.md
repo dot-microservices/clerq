@@ -42,6 +42,7 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 - **.get(service):** returns a random instance by service
 - **.all(service):** returns all instances by service
 - **.services():** returns list of all services
+- **.isCached(service):** checks if service instance cached properly
 - **.stop():** stops service registry
 
 ## Examples

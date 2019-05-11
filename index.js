@@ -76,14 +76,7 @@ class ServiceRegistry {
     get(service) {
         return new Promise((resolve, reject) => {
             if (is.not.string(service) || is.empty(service)) throw new Error('INVALID_SERVICE');
-
-            if (is.number(this._options.cache) && this._options.cache > 0 && this._cache.hasOwnProperty(service)) {
-                const cached = this._cache[service];
-                if (is.object(cached)) {
-                    if (Date.now() - cached.t < this._options.cache) return resolve(cached.d);
-                    else delete this._cache[service];
-                }
-            }
+            else if (this.isCached(service)) return resolve(this._cache[service].d);
 
             const key = this._key(service);
             this._redis.srandmember(key, (e, d) => {

@@ -20,6 +20,8 @@ class ServiceRegistry {
 
         this._cache = {};
         this._options = Object.assign({ prefix: 'clerq' }, options || {});
+        if (is.undefined(this._options.redis)) this._options.redis = {};
+        if (is.undefined(this._options.redis.db)) this._options.redis.db = 0;
         this._redis = redis.createClient(this._options.port, this._options.host, this._options.redis);
     }
 

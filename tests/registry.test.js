@@ -42,3 +42,8 @@ test('all services', async () => {
     const services = await registry.services();
     expect(services.includes(name)).toBeTruthy();
 });
+
+test('destroy services', async () => {
+    const service = await registry.destroy(name);
+    expect(service).toBeTruthy();
+});

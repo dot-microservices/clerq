@@ -68,6 +68,26 @@ class ServiceRegistry {
     }
 
     /**
+     * @description removes an existing service completely
+     * @param {String} service name
+     * @returns Promise
+     * @memberof ServiceRegistry
+     */
+    destroy(service) {
+        return new Promise((resolve, reject) => {
+            if (is.not.string(service) || is.empty(service)) throw new Error('INVALID_SERVICE');
+
+            const key = this._key(service);
+            this._redis.expire(key, 1, e => {
+                if (is.error(e)) {
+                    if (this._options.debug) console.log(e.message);
+                    reject(e);
+                } else resolve(true);
+            });
+        });
+    }
+
+    /**
      * @description returns a random instance by service
      * @param {String} service name
      * @returns Promise

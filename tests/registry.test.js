@@ -5,7 +5,7 @@ const ServiceRegistry = require('../');
 const name = Math.random().toString().replace('0.', '');
 const port = Math.floor(Math.random() * 9999);
 const port2 = Math.floor(Math.random() * 9999);
-const registry = new ServiceRegistry({ cache: 60000, expire: 5 });
+const registry = new ServiceRegistry({ cache: 60000, expire: 5, pino: { level: 'debug' } });
 
 afterAll(() => registry.stop());
 

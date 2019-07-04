@@ -2,6 +2,7 @@
 
 const ip = require('network-address');
 const is = require('is_js');
+const pino = require('pino');
 const redis = require('redis');
 
 /**
@@ -18,8 +19,10 @@ class ServiceRegistry {
         if (is.not.undefined(options) && is.not.object(options))
             throw new Error('invalid options');
 
-        this._cache = {};
         this._options = Object.assign({ prefix: 'clerq' }, options || {});
+
+        this._cache = {};
+        this._logger = pino(Object.assign({ level: 'error' }, is.object(this._options.pino) ? this._options.pino : {}));
         this._redis = redis.createClient(this._options.port, this._options.host, this._options.redis);
     }
 
@@ -38,9 +41,12 @@ class ServiceRegistry {
             this._redis.sadd(key, address, (e, d) => {
                 if (this._options.expire) this._redis.expire(key, this._options.expire);
                 if (is.error(e)) {
-                    if (this._options.debug) console.log(e.message);
+                    this._logger.error(e, 'clerq.up');
                     reject(e);
-                } else resolve(d);
+                } else {
+                    this._logger.info({ service, address, d }, 'clerq.up');
+                    resolve(d);
+                }
             });
         });
     }
@@ -60,9 +66,12 @@ class ServiceRegistry {
             this._redis.srem(key, address, (e, d) => {
                 if (this._options.expire) this._redis.expire(key, this._options.expire);
                 if (is.error(e)) {
-                    if (this._options.debug) console.log(e.message);
+                    this._logger.error(e, 'clerq.down');
                     reject(e);
-                } else resolve(d);
+                } else {
+                    this._logger.info({ service, address, d }, 'clerq.down');
+                    resolve(d);
+                }
             });
         });
     }
@@ -80,9 +89,12 @@ class ServiceRegistry {
             const key = this._key(service);
             this._redis.expire(key, 1, e => {
                 if (is.error(e)) {
-                    if (this._options.debug) console.log(e.message);
+                    this._logger.error(e, 'clerq.destroy');
                     reject(e);
-                } else resolve(true);
+                } else {
+                    this._logger.info({ service }, 'clerq.destroy');
+                    resolve(true);
+                }
             });
         });
     }
@@ -102,11 +114,12 @@ class ServiceRegistry {
             this._redis.srandmember(key, (e, d) => {
                 if (this._options.expire) this._redis.expire(key, this._options.expire);
                 if (is.error(e)) {
-                    if (this._options.debug) console.log(e.message);
+                    this._logger.error(e, 'clerq.get');
                     reject(e);
                 } else {
                     if (is.number(this._options.cache) && this._options.cache > 0)
                         if (d) this._cache[service] = { d, t: Date.now() };
+                    this._logger.info({ service, d }, 'clerq.get');
                     resolve(d);
                 }
             });
@@ -127,7 +140,7 @@ class ServiceRegistry {
             this._redis.smembers(key, (e, d) => {
                 if (this._options.expire) this._redis.expire(key, this._options.expire);
                 if (is.error(e)) {
-                    if (this._options.debug) console.log(e.message);
+                    this._logger.error(e, 'clerq.all');
                     reject(e);
                 } else {
                     if (is.number(this._options.cache) && this._options.cache > 0)
@@ -135,6 +148,7 @@ class ServiceRegistry {
                             const address = d[ Math.floor(Math.random() * d.length) ];
                             this._cache[service] = { d: address, t: Date.now() };
                         }
+                    this._logger.info({ service, d }, 'clerq.all');
                     resolve(d);
                 }
             });
@@ -150,13 +164,14 @@ class ServiceRegistry {
         return new Promise((resolve, reject) => {
             this._redis.keys(`${ this._options.prefix }*`, (e, d) => {
                 if (is.error(e)) {
-                    if (this._options.debug) console.log(e.message);
+                    this._logger.error(e, 'clerq.services');
                     reject(e);
                 } else {
                     const services = [];
                     if (is.array(d))
                         for (let service of d)
                             services.push(service.replace(this._key(), ''));
+                    this._logger.info(services, 'clerq.services');
                     resolve(services);
                 }
             });
@@ -170,9 +185,9 @@ class ServiceRegistry {
      * @memberof ServiceRegistry
      */
     isCached(service) {
-        if (is.number(this._options.cache) && this._options.cache > 0 && this._cache.hasOwnProperty(service)) {
+        if (is.number(this._options.cache) && this._options.cache > 0 && is.existy(this._cache[service])) {
             const cached = this._cache[service];
-            if (is.object(cached)) return Date.now() - cached.t < this._options.cache;
+            if (is.object(cached)) return Math.abs(Date.now() - cached.t) < this._options.cache;
         }
         return false;
     }
@@ -183,7 +198,7 @@ class ServiceRegistry {
      */
     stop() {
         this._redis.quit();
-        if (this._options.debug) console.log('service registry is down');
+        this._logger.info('service registry is down');
     }
 
     /**

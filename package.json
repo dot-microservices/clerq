@@ -1,6 +1,6 @@
 {
   "name": "clerq",
-  "version": "0.1.9",
+  "version": "0.2.1",
   "description": "a redis based minimalist service registry and service discovery",
   "keywords": [
     "redis",
@@ -27,14 +27,15 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.17.3",
+    "eslint": "^6.0.1",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.0",
     "jest": "^24.7.1"
   },
   "dependencies": {
     "is_js": "^0.9.0",
     "network-address": "^1.1.2",
+    "pino": "^5.12.6",
     "redis": "^2.8.0"
   },
   "jest": {

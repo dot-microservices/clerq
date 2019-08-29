@@ -30,6 +30,7 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 - **delimiter   :** delimiter between prefix and service name.
 - **expire      :** expire for service registry records. it's disabled by default.
 - **host        :** redis hostname
+- **iface       :** optional. name of the network interface to get outer ip from
 - **pino        :** options for pino logger. it's { "level": "error" } by default.
 - **port        :** redis port
 - **prefix      :** prefix for service names

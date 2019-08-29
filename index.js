@@ -1,6 +1,6 @@
 'use strict';
 
-const ip = require('network-address');
+const ip = require('ip');
 const is = require('is_js');
 const pino = require('pino');
 const redis = require('redis');
@@ -208,11 +208,11 @@ class ServiceRegistry {
      * @memberof ServiceRegistry
      */
     _address(target) {
-        if (is.number(target)) return `${ ip(this._options.iface) }:${ Math.abs(target) }`;
+        if (is.number(target)) return `${ ip.address() }:${ Math.abs(target) }`;
         else if (is.string(target)) {
             if (!target.includes(':')) {
                 const port = parseInt(target);
-                if (is.number(port)) return `${ ip(this._options.iface) }:${ Math.abs(port) }`;
+                if (is.number(port)) return `${ ip.address() }:${ Math.abs(port) }`;
             } else return target;
         }
     }

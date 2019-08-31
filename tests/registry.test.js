@@ -5,7 +5,7 @@ const ServiceRegistry = require('../');
 const name = Math.random().toString().replace('0.', '');
 const port = Math.floor(Math.random() * 9999);
 const port2 = Math.floor(Math.random() * 9999);
-const registry = new ServiceRegistry({ cache: 60000, expire: 5, pino: { level: 'debug' } });
+const registry = new ServiceRegistry({ cache: 60000, expire: 5, pino: { level: 'fatal' } });
 
 afterAll(() => registry.stop());
 
@@ -46,4 +46,20 @@ test('all services', async () => {
 test('destroy services', async () => {
     const service = await registry.destroy(name);
     expect(service).toBeTruthy();
+});
+
+const claim = 8688;
+test('find port', async () => {
+    const taken = await registry.findPort(claim);
+    expect(taken).toBe(claim);
+});
+
+test('claim port', async () => {
+    const taken = await registry.findPort(claim, '127.0.0.1');
+    expect(taken).toBe(claim);
+});
+
+test('release port', async () => {
+    const taken = await registry.releasePort(claim, '127.0.0.1');
+    expect(taken).toBe(1);
 });

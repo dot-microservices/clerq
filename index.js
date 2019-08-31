@@ -3,6 +3,7 @@
 const ip = require('ip');
 const is = require('is_js');
 const pino = require('pino');
+const portFinder = require('portfinder');
 const redis = require('redis');
 
 /**
@@ -227,6 +228,53 @@ class ServiceRegistry {
         const key = `${ this._options.prefix }${ this._options.delimiter || '::' }`;
         if (!service) return key;
         else return `${ key }${ service }`;
+    }
+
+    /**
+     * @description finds an available port
+     * @param {Number} [port] starting point
+     * @param {String} [ip] ip address which is going to claim the port
+     * @returns Promise<Number>
+     * @memberof ServiceRegistry
+     */
+    findPort(port, ip) {
+        if (is.ip(port)) {
+            ip = port;
+            port = undefined;
+        }
+        return new Promise((resolve, reject) => {
+            portFinder.getPort({ port }, (e, port) => {
+                if (e) reject(e);
+                else if (is.not.ip(ip)) resolve(port);
+                else {
+                    const key = this._key(`${ ip }/p`);
+                    this._redis.sadd(key, port, (e, d) => {
+                        if (this._options.expire) this._redis.expire(key, this._options.expire);
+                        if (is.error(e)) reject(e);
+                        else if (d) resolve(port);
+                        else this.findPort(port + 1, ip);
+                    });
+                }
+            });
+        });
+    }
+
+    /**
+     * @description release a taken port
+     * @param {Number} port port number to be released
+     * @param {String} ip address
+     * @returns Promise<Number>
+     * @memberof ServiceRegistry
+     */
+    releasePort(port, ip) {
+        return new Promise((resolve, reject) => {
+            const key = this._key(`${ ip }/p`);
+            this._redis.srem(key, port, (e, d) => {
+                if (this._options.expire) this._redis.expire(key, this._options.expire);
+                if (is.error(e)) reject(e);
+                else resolve(d);
+            });
+        });
     }
 }
 

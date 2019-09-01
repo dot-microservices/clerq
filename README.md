@@ -46,8 +46,8 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 - **.services():** returns list of all services
 - **.isCached(service):** checks if service instance cached properly
 - **.stop():** stops service registry
-- **.findPort([port], [ip]):** finds available port. if ip provided, automatically claims the port
-- **.releasePort(port, ip):** releases a claimed port
+- **.findPort([port], [claim]):** finds available port. if claim is true, automatically claims the port
+- **.releasePort(port):** releases a claimed port
 
 ## Examples
 

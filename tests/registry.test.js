@@ -48,18 +48,33 @@ test('destroy services', async () => {
     expect(service).toBeTruthy();
 });
 
-const claim = 8688;
+const port3 = 8688;
 test('find port', async () => {
-    const taken = await registry.findPort(claim);
-    expect(taken).toBe(claim);
+    const taken = await registry.findPort(port3);
+    expect(taken).toBe(port3);
 });
 
 test('claim port', async () => {
-    const taken = await registry.findPort(claim, '127.0.0.1');
-    expect(taken).toBe(claim);
+    const taken = await registry.findPort(port3, true);
+    expect(taken).toBe(port3);
+});
+
+test('claim again', async () => {
+    const taken = await registry.findPort(port3, true);
+    expect(taken).toBe(port3 + 1);
 });
 
 test('release port', async () => {
-    const taken = await registry.releasePort(claim, '127.0.0.1');
+    const taken = await registry.releasePort(port3);
     expect(taken).toBe(1);
+});
+
+test('release other port', async () => {
+    const taken = await registry.releasePort(port3 + 1);
+    expect(taken).toBe(1);
+});
+
+test('release unknown port', async () => {
+    const taken = await registry.releasePort(port3 + 10);
+    expect(taken).toBe(0);
 });

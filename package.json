@@ -1,6 +1,6 @@
 {
   "name": "clerq",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "a redis based minimalist service registry and service discovery",
   "keywords": [
     "redis",

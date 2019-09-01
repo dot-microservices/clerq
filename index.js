@@ -232,31 +232,42 @@ class ServiceRegistry {
 
     /**
      * @description finds an available port
+     * @param {Number} port starting point
+     * @param {String} ip ip address
+     * @param {Function} resolve success callback
+     * @param {Function} reject fail callback
+     * @private
+     * @memberof ServiceRegistry
+     */
+    _findPort(port, claim, resolve, reject) {
+        portFinder.getPort({ port }, (e, port) => {
+            if (e) reject(e);
+            else if (!claim) resolve(port);
+            else {
+                const key = this._key(`${ ip.address() }/p`);
+                this._redis.sadd(key, port, (e, d) => {
+                    if (this._options.expire) this._redis.expire(key, this._options.expire);
+                    if (is.error(e)) reject(e);
+                    else if (d) resolve(port);
+                    else this._findPort(port + 1, claim, resolve, reject);
+                });
+            }
+        });
+    }
+
+    /**
+     * @description finds an available port
      * @param {Number} [port] starting point
      * @param {String} [ip] ip address which is going to claim the port
      * @returns Promise<Number>
      * @memberof ServiceRegistry
      */
-    findPort(port, ip) {
-        if (is.ip(port)) {
-            ip = port;
+    findPort(port, claim) {
+        if (is.boolean(port)) {
+            claim = port;
             port = undefined;
         }
-        return new Promise((resolve, reject) => {
-            portFinder.getPort({ port }, (e, port) => {
-                if (e) reject(e);
-                else if (is.not.ip(ip)) resolve(port);
-                else {
-                    const key = this._key(`${ ip }/p`);
-                    this._redis.sadd(key, port, (e, d) => {
-                        if (this._options.expire) this._redis.expire(key, this._options.expire);
-                        if (is.error(e)) reject(e);
-                        else if (d) resolve(port);
-                        else this.findPort(port + 1, ip);
-                    });
-                }
-            });
-        });
+        return new Promise((resolve, reject) => this._findPort(port, claim, resolve, reject));
     }
 
     /**
@@ -266,9 +277,9 @@ class ServiceRegistry {
      * @returns Promise<Number>
      * @memberof ServiceRegistry
      */
-    releasePort(port, ip) {
+    releasePort(port) {
         return new Promise((resolve, reject) => {
-            const key = this._key(`${ ip }/p`);
+            const key = this._key(`${ ip.address() }/p`);
             this._redis.srem(key, port, (e, d) => {
                 if (this._options.expire) this._redis.expire(key, this._options.expire);
                 if (is.error(e)) reject(e);

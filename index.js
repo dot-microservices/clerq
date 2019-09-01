@@ -287,6 +287,22 @@ class ServiceRegistry {
             });
         });
     }
+
+    /**
+     * @description returns all claimed ports
+     * @returns Promise<Array>
+     * @memberof ServiceRegistry
+     */
+    ports() {
+        return new Promise((resolve, reject) => {
+            const key = this._key(`${ ip.address() }/p`);
+            this._redis.smembers(key, (e, d) => {
+                if (this._options.expire) this._redis.expire(key, this._options.expire);
+                if (is.error(e)) reject(e);
+                else resolve(d);
+            });
+        });
+    }
 }
 
 module.exports = ServiceRegistry;

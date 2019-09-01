@@ -64,6 +64,11 @@ test('claim again', async () => {
     expect(taken).toBe(port3 + 1);
 });
 
+test('ports', async () => {
+    const ports = await registry.ports();
+    expect(ports).toContain((port3 + 1).toString());
+});
+
 test('release port', async () => {
     const taken = await registry.releasePort(port3);
     expect(taken).toBe(1);

@@ -3,8 +3,6 @@
 const ip = require('ip');
 const is = require('is_js');
 const pino = require('pino');
-const portFinder = require('portfinder');
-const redis = require('redis');
 
 /**
  * @description Redis based service registry & service discovery
@@ -13,18 +11,22 @@ const redis = require('redis');
 class ServiceRegistry {
     /**
      *Creates an instance of ServiceRegistry.
+     * @param {Object} redis redis instance
      * @param {Object} options registry options
      * @memberof ServiceRegistry
      */
-    constructor(options) {
+    constructor(redis, options) {
+        if (is.not.undefined(options) && is.not.object(options))
+            throw new Error('invalid options');
+
         if (is.not.undefined(options) && is.not.object(options))
             throw new Error('invalid options');
 
         this._options = Object.assign({ prefix: 'clerq' }, options || {});
 
         this._cache = {};
+        this._redis = redis;
         this._logger = pino(Object.assign({ level: 'error' }, is.object(this._options.pino) ? this._options.pino : {}));
-        this._redis = redis.createClient(this._options.port, this._options.host, this._options.redis);
     }
 
     /**
@@ -228,80 +230,6 @@ class ServiceRegistry {
         const key = `${ this._options.prefix }${ this._options.delimiter || '::' }`;
         if (!service) return key;
         else return `${ key }${ service }`;
-    }
-
-    /**
-     * @description finds an available port
-     * @param {Number} port starting point
-     * @param {String} ip ip address
-     * @param {Function} resolve success callback
-     * @param {Function} reject fail callback
-     * @private
-     * @memberof ServiceRegistry
-     */
-    _findPort(port, claim, resolve, reject) {
-        portFinder.getPort({ port }, (e, port) => {
-            if (e) reject(e);
-            else if (!claim) resolve(port);
-            else {
-                const key = this._key(`${ ip.address() }/p`);
-                this._redis.sadd(key, port, (e, d) => {
-                    if (this._options.expire) this._redis.expire(key, this._options.expire);
-                    if (is.error(e)) reject(e);
-                    else if (d) resolve(port);
-                    else this._findPort(port + 1, claim, resolve, reject);
-                });
-            }
-        });
-    }
-
-    /**
-     * @description finds an available port
-     * @param {Number} [port] starting point
-     * @param {String} [ip] ip address which is going to claim the port
-     * @returns Promise<Number>
-     * @memberof ServiceRegistry
-     */
-    findPort(port, claim) {
-        if (is.boolean(port)) {
-            claim = port;
-            port = undefined;
-        }
-        return new Promise((resolve, reject) => this._findPort(port, claim, resolve, reject));
-    }
-
-    /**
-     * @description release a taken port
-     * @param {Number} port port number to be released
-     * @param {String} ip address
-     * @returns Promise<Number>
-     * @memberof ServiceRegistry
-     */
-    releasePort(port) {
-        return new Promise((resolve, reject) => {
-            const key = this._key(`${ ip.address() }/p`);
-            this._redis.srem(key, port, (e, d) => {
-                if (this._options.expire) this._redis.expire(key, this._options.expire);
-                if (is.error(e)) reject(e);
-                else resolve(d);
-            });
-        });
-    }
-
-    /**
-     * @description returns all claimed ports
-     * @returns Promise<Array>
-     * @memberof ServiceRegistry
-     */
-    ports() {
-        return new Promise((resolve, reject) => {
-            const key = this._key(`${ ip.address() }/p`);
-            this._redis.smembers(key, (e, d) => {
-                if (this._options.expire) this._redis.expire(key, this._options.expire);
-                if (is.error(e)) reject(e);
-                else resolve(d);
-            });
-        });
     }
 }
 

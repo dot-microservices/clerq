@@ -1,13 +1,19 @@
 'use strict';
 
+const redis = require('redis-mock');
 const ServiceRegistry = require('../');
 
 const name = Math.random().toString().replace('0.', '');
 const port = Math.floor(Math.random() * 9999);
 const port2 = Math.floor(Math.random() * 9999);
-const registry = new ServiceRegistry({ cache: 60000, expire: 5, pino: { level: 'fatal' } });
+const registry = new ServiceRegistry(redis.createClient(), { cache: 60000, expire: 5, pino: { level: 'fatal' } });
 
 afterAll(() => registry.stop());
+
+test('address', async () => {
+    const target = `${ Math.random().toString().replace('0.', '') }:${ Math.random().toString().replace('0.', '') }`;
+    expect(registry._address(target)).toBe(target);
+});
 
 test('new service', async () => {
     const up = await registry.up(name, port);
@@ -46,40 +52,4 @@ test('all services', async () => {
 test('destroy services', async () => {
     const service = await registry.destroy(name);
     expect(service).toBeTruthy();
-});
-
-const port3 = 8688;
-test('find port', async () => {
-    const taken = await registry.findPort(port3);
-    expect(taken).toBe(port3);
-});
-
-test('claim port', async () => {
-    const taken = await registry.findPort(port3, true);
-    expect(taken).toBe(port3);
-});
-
-test('claim again', async () => {
-    const taken = await registry.findPort(port3, true);
-    expect(taken).toBe(port3 + 1);
-});
-
-test('ports', async () => {
-    const ports = await registry.ports();
-    expect(ports).toContain((port3 + 1).toString());
-});
-
-test('release port', async () => {
-    const taken = await registry.releasePort(port3);
-    expect(taken).toBe(1);
-});
-
-test('release other port', async () => {
-    const taken = await registry.releasePort(port3 + 1);
-    expect(taken).toBe(1);
-});
-
-test('release unknown port', async () => {
-    const taken = await registry.releasePort(port3 + 10);
-    expect(taken).toBe(0);
 });

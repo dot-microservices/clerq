@@ -29,12 +29,9 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 - **cache       :** expiration value in milliseconds for service caching. it's disabled by default.
 - **delimiter   :** delimiter between prefix and service name.
 - **expire      :** expire for service registry records. it's disabled by default.
-- **host        :** redis hostname
 - **iface       :** optional. name of the network interface to get outer ip from
 - **pino        :** options for pino logger. it's { "level": "error" } by default.
-- **port        :** redis port
 - **prefix      :** prefix for service names
-- **redis       :** options for redis instance ( please see <https://www.npmjs.com/package/redis> )
 
 ## Methods
 
@@ -53,13 +50,12 @@ docker run -p 6379:6379 --name clerq_redis redis:4-alpine
 
 ```js
 const ServiceRegistry = require('clerq');
-const registry = new ServiceRegistry({});
+const Redis = require('redis');
+
+const registry = new ServiceRegistry(redis.createClient(), {});
 
 registry.up('test', 8000).then(console.log).catch(console.log);
-
 registry.down('test', 8000).then(console.log).catch(console.log);
-
 registry.get('test').then(console.log).catch(console.log);
-
 registry.stop();
 ```
